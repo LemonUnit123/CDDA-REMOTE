@@ -1,0 +1,69 @@
+{
+  "_note": "Editable. 'keys' is a sequence; each key uses the Python 'keyboard' library format (e.g. 'g', 'shift+e', 'esc', 'enter', 'tab', 'space'). No server restart needed - just reload the page. Labels support any language code; add e.g. \"fr\": \"...\" and it appears in settings automatically.",
+  "tabs": [
+    {
+      "id": "world",
+      "label": { "de": "Welt", "en": "World" },
+      "buttons": [
+        { "icon": "⇣", "label": { "de": "Aufheben", "en": "Pick up" }, "keys": ["g"] },
+        { "icon": "👁", "label": { "de": "Umsehen", "en": "Look" }, "keys": ["x"] },
+        { "icon": "✋", "label": { "de": "Untersuchen", "en": "Examine" }, "keys": ["e"] },
+        { "icon": "🚪", "label": { "de": "Öffnen", "en": "Open" }, "keys": ["o"] },
+        { "icon": "🔒", "label": { "de": "Schließen", "en": "Close" }, "keys": ["c"] },
+        { "icon": "💥", "label": { "de": "Zerschlagen", "en": "Smash" }, "keys": ["s"] },
+        { "icon": "🔪", "label": { "de": "Zerlegen", "en": "Butcher" }, "keys": ["shift+b"] },
+        { "icon": "⬆", "label": { "de": "Treppe hoch", "en": "Stairs up" }, "keys": ["shift+comma"] },
+        { "icon": "⬇", "label": { "de": "Treppe runter", "en": "Stairs down" }, "keys": ["shift+period"] },
+        { "icon": "📋", "label": { "de": "Items in Nähe", "en": "Nearby items" }, "keys": ["shift+v"] },
+        { "icon": "🗺", "label": { "de": "Karte", "en": "Map" }, "keys": ["m"] },
+        { "icon": "🧲", "label": { "de": "Möbel ziehen", "en": "Grab furniture" }, "keys": ["shift+g"] }
+      ]
+    },
+    {
+      "id": "body",
+      "label": { "de": "Körper", "en": "Body" },
+      "buttons": [
+        { "icon": "🎒", "label": { "de": "Inventar", "en": "Inventory" }, "keys": ["i"] },
+        { "icon": "🍖", "label": { "de": "Essen", "en": "Eat" }, "keys": ["shift+e"] },
+        { "icon": "🧥", "label": { "de": "Anziehen", "en": "Wear" }, "keys": ["shift+w"] },
+        { "icon": "👕", "label": { "de": "Ausziehen", "en": "Take off" }, "keys": ["shift+t"] },
+        { "icon": "🗡", "label": { "de": "Wielden", "en": "Wield" }, "keys": ["w"] },
+        { "icon": "🔧", "label": { "de": "Benutzen", "en": "Use item" }, "keys": ["a"] },
+        { "icon": "📥", "label": { "de": "Nachladen", "en": "Reload" }, "keys": ["r"] },
+        { "icon": "🎯", "label": { "de": "Feuern", "en": "Fire" }, "keys": ["f"] },
+        { "icon": "🤾", "label": { "de": "Werfen", "en": "Throw" }, "keys": ["t"] },
+        { "icon": "📤", "label": { "de": "Ablegen", "en": "Drop" }, "keys": ["shift+d"] },
+        { "icon": "😴", "label": { "de": "Schlafen", "en": "Sleep" }, "keys": ["shift+4"] },
+        { "icon": "🧍", "label": { "de": "Charakter", "en": "Character" }, "keys": ["shift+2"] }
+      ]
+    },
+    {
+      "id": "menus",
+      "label": { "de": "Menüs", "en": "Menus" },
+      "buttons": [
+        { "icon": "🛠", "label": { "de": "Craften", "en": "Craft" }, "keys": ["shift+7"] },
+        { "icon": "🏗", "label": { "de": "Bauen", "en": "Construct" }, "keys": ["shift+8"] },
+        { "icon": "📜", "label": { "de": "Missionen", "en": "Missions" }, "keys": ["shift+m"] },
+        { "icon": "🚗", "label": { "de": "Fahrzeug", "en": "Vehicle" }, "keys": ["shift+6"] },
+        { "icon": "💬", "label": { "de": "Reden", "en": "Chat" }, "keys": ["shift+c"] },
+        { "icon": "🧠", "label": { "de": "Fertigkeiten", "en": "Skills" }, "keys": ["shift+3"] },
+        { "icon": "⏳", "label": { "de": "Warten", "en": "Wait" }, "keys": ["|"] },
+        { "icon": "🛡", "label": { "de": "Safe Mode", "en": "Safe mode" }, "keys": ["shift+1"] }
+      ]
+    },
+    {
+      "id": "system",
+      "label": { "de": "System", "en": "System" },
+      "buttons": [
+        { "icon": "↩", "label": { "de": "Enter", "en": "Enter" }, "keys": ["enter"] },
+        { "icon": "⎋", "label": { "de": "Escape", "en": "Escape" }, "keys": ["esc"] },
+        { "icon": "⇥", "label": { "de": "Tab", "en": "Tab" }, "keys": ["tab"] },
+        { "icon": "␣", "label": { "de": "Leertaste", "en": "Space" }, "keys": ["space"] },
+        { "icon": "❓", "label": { "de": "Ja (Y)", "en": "Yes (Y)" }, "keys": ["shift+y"] },
+        { "icon": "✖", "label": { "de": "Nein (N)", "en": "No (N)" }, "keys": ["shift+n"] },
+        { "icon": "💾", "label": { "de": "Speichern", "en": "Save" }, "keys": ["esc", "s"] },
+        { "icon": "🔍", "label": { "de": "Filter (/)", "en": "Filter (/)" }, "keys": ["/"] }
+      ]
+    }
+  ]
+}

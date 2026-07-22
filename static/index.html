@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0c100e">
+<title>CDDA Remote</title>
+<style>
+  :root {
+    --bg: #0c100e;
+    --panel: #151c18;
+    --panel-edge: #23302a;
+    --text: #c9d6c4;
+    --dim: #6d7d70;
+    --green: #7ac74f;
+    --amber: #e0a458;
+    --cyan: #62c3d6;
+    --red: #cf5c5c;
+    --btn-min: 96px;   /* Buttongröße, via Settings überschrieben */
+    --btn-h: 76px;
+  }
+  body[data-size="s"] { --btn-min: 78px; --btn-h: 62px; }
+  body[data-size="l"] { --btn-min: 118px; --btn-h: 94px; }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
+    overflow: hidden;
+    touch-action: manipulation;
+    user-select: none;
+  }
+
+  body { display: grid; grid-template-rows: auto 1fr; gap: 8px; padding: 10px; }
+
+  header { display: flex; align-items: center; gap: 12px; padding: 4px 6px; }
+  header h1 { font-size: 0.95rem; font-weight: 600; letter-spacing: 0.12em; color: var(--green); }
+  #status { margin-left: auto; font-size: 0.75rem; color: var(--dim); }
+  #status.err { color: var(--red); }
+  #gear {
+    font-family: inherit; font-size: 1.1rem;
+    background: var(--panel); color: var(--dim);
+    border: 1px solid var(--panel-edge); border-radius: 8px;
+    width: 40px; height: 40px; cursor: pointer;
+  }
+  #gear:active { color: var(--cyan); }
+
+  main { display: grid; grid-template-columns: minmax(230px, 32%) 1fr; gap: 10px; min-height: 0; }
+  body[data-pad="right"] main { grid-template-columns: 1fr minmax(230px, 32%); }
+  body[data-pad="right"] #pad { order: 2; }
+  body[data-pad="off"] main { grid-template-columns: 1fr; }
+  body[data-pad="off"] #pad { display: none; }
+  @media (max-width: 640px) and (orientation: portrait) {
+    main { grid-template-columns: 1fr !important; grid-template-rows: auto 1fr; }
+    body[data-pad="right"] #pad { order: 0; }
+  }
+
+  #pad {
+    background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 10px;
+    display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+    gap: 6px; padding: 10px; align-self: stretch;
+  }
+  #pad button {
+    font-family: inherit; font-size: 1.5rem;
+    background: #101713; color: var(--green);
+    border: 1px solid var(--panel-edge); border-radius: 8px;
+    min-height: 60px; cursor: pointer;
+  }
+  #pad button:active { background: var(--green); color: var(--bg); }
+  #pad .at { font-size: 1.9rem; color: var(--text); border-color: var(--green); }
+
+  #right { display: grid; grid-template-rows: auto 1fr; gap: 8px; min-height: 0; }
+  nav { display: flex; gap: 6px; }
+  nav button {
+    flex: 1; font-family: inherit; font-size: 0.85rem; letter-spacing: 0.05em;
+    padding: 10px 4px; background: var(--panel); color: var(--dim);
+    border: 1px solid var(--panel-edge); border-radius: 8px; cursor: pointer;
+  }
+  nav button.active { color: var(--cyan); border-color: var(--cyan); }
+
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--btn-min), 1fr));
+    grid-auto-rows: minmax(var(--btn-h), auto);
+    gap: 8px; overflow-y: auto; padding-bottom: 8px;
+  }
+  #grid button {
+    font-family: inherit; background: var(--panel); color: var(--text);
+    border: 1px solid var(--panel-edge); border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 5px; cursor: pointer; padding: 6px;
+  }
+  #grid button .ico { font-size: 1.5rem; line-height: 1; }
+  #grid button .lbl { font-size: 0.72rem; color: var(--dim); text-align: center; }
+  #grid button:active { background: var(--amber); }
+  #grid button:active .lbl, #grid button:active .ico { color: var(--bg); }
+  body[data-size="s"] #grid .ico { font-size: 1.25rem; }
+  body[data-size="l"] #grid .ico { font-size: 1.8rem; }
+
+  /* ---------- Settings-Overlay ---------- */
+  #settings {
+    position: fixed; inset: 0;
+    background: rgba(6, 9, 8, 0.85);
+    display: none; align-items: center; justify-content: center;
+    z-index: 10;
+  }
+  #settings.open { display: flex; }
+  #settings .sheet {
+    background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 12px;
+    padding: 20px; width: min(420px, 92vw);
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  #settings h2 { font-size: 0.9rem; letter-spacing: 0.1em; color: var(--cyan); }
+  .setting { display: flex; flex-direction: column; gap: 6px; }
+  .setting > span { font-size: 0.75rem; color: var(--dim); }
+  .seg { display: flex; gap: 6px; }
+  .seg button {
+    flex: 1; font-family: inherit; font-size: 0.8rem; padding: 10px 4px;
+    background: #101713; color: var(--dim);
+    border: 1px solid var(--panel-edge); border-radius: 8px; cursor: pointer;
+  }
+  .seg button.on { color: var(--green); border-color: var(--green); }
+  #closeSettings {
+    font-family: inherit; font-size: 0.85rem; padding: 12px;
+    background: #101713; color: var(--text);
+    border: 1px solid var(--panel-edge); border-radius: 8px; cursor: pointer;
+  }
+
+  button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+  @media (prefers-reduced-motion: no-preference) {
+    #grid button, #pad button, nav button, .seg button { transition: background 80ms; }
+  }
+</style>
+</head>
+<body data-pad="left" data-size="m">
+
+<header>
+  <h1>CDDA&nbsp;REMOTE</h1>
+  <span id="status">…</span>
+  <button id="gear" aria-label="Settings">⚙</button>
+</header>
+
+<main>
+  <div id="pad" aria-label="Movement"></div>
+  <div id="right">
+    <nav id="tabs"></nav>
+    <div id="grid"></div>
+  </div>
+</main>
+
+<div id="settings">
+  <div class="sheet">
+    <h2 data-i18n="settings">EINSTELLUNGEN</h2>
+
+    <div class="setting">
+      <span data-i18n="language">Sprache</span>
+      <div class="seg" id="segLang"></div>
+    </div>
+
+    <div class="setting">
+      <span data-i18n="padPos">Bewegungspad</span>
+      <div class="seg" id="segPad">
+        <button data-v="left" data-i18n="left">Links</button>
+        <button data-v="right" data-i18n="right">Rechts</button>
+        <button data-v="off" data-i18n="hidden">Aus</button>
+      </div>
+    </div>
+
+    <div class="setting">
+      <span data-i18n="btnSize">Buttongröße</span>
+      <div class="seg" id="segSize">
+        <button data-v="s">S</button>
+        <button data-v="m">M</button>
+        <button data-v="l">L</button>
+      </div>
+    </div>
+
+    <div class="setting">
+      <span data-i18n="vibration">Vibration</span>
+      <div class="seg" id="segVib">
+        <button data-v="on" data-i18n="on">An</button>
+        <button data-v="off" data-i18n="off">Aus</button>
+      </div>
+    </div>
+
+    <button id="closeSettings" data-i18n="close">Schließen</button>
+  </div>
+</div>
+
+<script>
+  // ---- UI-Übersetzungen ---------------------------------------------------
+  const I18N = {
+    de: { settings: "EINSTELLUNGEN", language: "Sprache", padPos: "Bewegungspad",
+          left: "Links", right: "Rechts", hidden: "Aus", btnSize: "Buttongröße",
+          vibration: "Vibration", on: "An", off: "Aus", close: "Schließen",
+          connected: "verbunden", windowFound: "CDDA gefunden",
+          windowMissing: "CDDA-Fenster fehlt", serverDown: "Server nicht erreichbar",
+          configError: "buttons.json nicht ladbar", waitTurn: "Warten (1 Zug)" },
+    en: { settings: "SETTINGS", language: "Language", padPos: "Movement pad",
+          left: "Left", right: "Right", hidden: "Off", btnSize: "Button size",
+          vibration: "Vibration", on: "On", off: "Off", close: "Close",
+          connected: "connected", windowFound: "CDDA found",
+          windowMissing: "CDDA window missing", serverDown: "Server unreachable",
+          configError: "Cannot load buttons.json", waitTurn: "Wait (1 turn)" }
+  };
+
+  // ---- Settings (localStorage) --------------------------------------------
+  const DEFAULTS = { lang: "de", pad: "left", size: "m", vib: "on" };
+  let settings = { ...DEFAULTS };
+  try { Object.assign(settings, JSON.parse(localStorage.getItem("cddaRemote") || "{}")); }
+  catch { /* defekte Daten ignorieren */ }
+
+  function saveSettings() {
+    localStorage.setItem("cddaRemote", JSON.stringify(settings));
+  }
+
+  function t(key) {
+    return (I18N[settings.lang] || I18N.en)[key] || I18N.en[key] || key;
+  }
+
+  const statusEl = document.getElementById("status");
+  let config = null;
+  let activeTab = null;
+  let lastStatus = { key: "connected", err: false };
+
+  // ---- Anwenden aller Settings auf die UI ---------------------------------
+  function applySettings() {
+    document.body.dataset.pad = settings.pad;
+    document.body.dataset.size = settings.size;
+    document.documentElement.lang = settings.lang;
+    for (const el of document.querySelectorAll("[data-i18n]"))
+      el.textContent = t(el.dataset.i18n);
+    for (const [segId, key] of [["segPad","pad"],["segSize","size"],["segVib","vib"],["segLang","lang"]])
+      for (const b of document.getElementById(segId).children)
+        b.classList.toggle("on", b.dataset.v === settings[key]);
+    if (config) { renderTabs(); showTab(activeTab); }
+    setStatus(lastStatus.key, lastStatus.err);
+  }
+
+  function setStatus(key, isError) {
+    lastStatus = { key, err: isError };
+    statusEl.textContent = t(key);
+    statusEl.classList.toggle("err", !!isError);
+  }
+
+  // ---- Label-Auflösung: String oder {de,en,...} ---------------------------
+  function label(obj) {
+    if (typeof obj === "string") return obj;
+    return obj[settings.lang] || obj.en || Object.values(obj)[0] || "?";
+  }
+
+  // ---- Tastendruck senden -------------------------------------------------
+  async function send(keys) {
+    if (settings.vib === "on" && navigator.vibrate) navigator.vibrate(15);
+    try {
+      const res = await fetch("/key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keys })
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      setStatus("connected", false);
+    } catch {
+      setStatus("serverDown", true);
+    }
+  }
+
+  // ---- Bewegungspad -------------------------------------------------------
+  const PAD = [
+    ["↖", "y"], ["↑", "k"], ["↗", "u"],
+    ["←", "h"], ["@", "."], ["→", "l"],
+    ["↙", "b"], ["↓", "j"], ["↘", "n"]
+  ];
+  const padEl = document.getElementById("pad");
+  for (const [symbol, key] of PAD) {
+    const b = document.createElement("button");
+    b.textContent = symbol;
+    if (symbol === "@") { b.classList.add("at"); b.title = t("waitTurn"); }
+    b.addEventListener("pointerdown", e => { e.preventDefault(); send([key]); });
+    padEl.appendChild(b);
+  }
+
+  // ---- Tabs & Grid --------------------------------------------------------
+  const tabsEl = document.getElementById("tabs");
+  const gridEl = document.getElementById("grid");
+
+  function renderTabs() {
+    tabsEl.innerHTML = "";
+    for (const tab of config.tabs) {
+      const b = document.createElement("button");
+      b.textContent = label(tab.label);
+      b.dataset.id = tab.id;
+      b.classList.toggle("active", tab.id === activeTab);
+      b.addEventListener("click", () => showTab(tab.id));
+      tabsEl.appendChild(b);
+    }
+  }
+
+  function showTab(id) {
+    activeTab = id;
+    for (const btn of tabsEl.children)
+      btn.classList.toggle("active", btn.dataset.id === id);
+    gridEl.innerHTML = "";
+    const tab = config.tabs.find(x => x.id === id);
+    if (!tab) return;
+    for (const def of tab.buttons) {
+      const b = document.createElement("button");
+      const ico = document.createElement("span");
+      ico.className = "ico"; ico.textContent = def.icon;
+      const lbl = document.createElement("span");
+      lbl.className = "lbl"; lbl.textContent = label(def.label);
+      b.append(ico, lbl);
+      b.addEventListener("pointerdown", e => { e.preventDefault(); send(def.keys); });
+      gridEl.appendChild(b);
+    }
+  }
+
+  // ---- Settings-Panel -----------------------------------------------------
+  const settingsEl = document.getElementById("settings");
+  document.getElementById("gear").addEventListener("click", () => settingsEl.classList.add("open"));
+  document.getElementById("closeSettings").addEventListener("click", () => settingsEl.classList.remove("open"));
+  settingsEl.addEventListener("click", e => { if (e.target === settingsEl) settingsEl.classList.remove("open"); });
+
+  function bindSegment(segId, key) {
+    document.getElementById(segId).addEventListener("click", e => {
+      const v = e.target.dataset?.v;
+      if (!v) return;
+      settings[key] = v;
+      saveSettings();
+      applySettings();
+    });
+  }
+  bindSegment("segPad", "pad");
+  bindSegment("segSize", "size");
+  bindSegment("segVib", "vib");
+  bindSegment("segLang", "lang");
+
+  // Sprachauswahl dynamisch aus buttons.json ableiten (alle Codes, die in
+  // Labels vorkommen) + alle UI-Sprachen
+  function buildLangSegment() {
+    const langs = new Set(Object.keys(I18N));
+    for (const tab of config.tabs) {
+      if (typeof tab.label === "object")
+        Object.keys(tab.label).forEach(l => langs.add(l));
+    }
+    const seg = document.getElementById("segLang");
+    seg.innerHTML = "";
+    for (const l of [...langs].sort()) {
+      const b = document.createElement("button");
+      b.dataset.v = l;
+      b.textContent = l.toUpperCase();
+      seg.appendChild(b);
+    }
+  }
+
+  // ---- Init ---------------------------------------------------------------
+  async function init() {
+    try {
+      config = await (await fetch("/buttons.json")).json();
+    } catch {
+      setStatus("configError", true);
+      return;
+    }
+    activeTab = config.tabs[0].id;
+    buildLangSegment();
+    applySettings();
+
+    try {
+      const ping = await (await fetch("/ping")).json();
+      setStatus(ping.window ? "windowFound" : "windowMissing", !ping.window);
+    } catch {
+      setStatus("serverDown", true);
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

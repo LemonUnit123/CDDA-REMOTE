@@ -1,0 +1,2 @@
+flask>=3.0
+keyboard>=0.13
