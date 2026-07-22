@@ -1,3 +1,13 @@
+# About why this project exists
+
+I'm a lazy person, and when I first got into Cataclysm: Dark Days Ahead, I quickly realized just how many key combinations there are to remember. While the depth of the game is amazing, I kept getting pulled out of the experience because I had to constantly recall or look up shortcuts.
+
+That inspired me to build a simple remote control with visual buttons similar to a Stream Deck with icons and short descriptions instead of relying solely on keyboard shortcuts. The goal wasn't to replace the keyboard, but to make learning and using the game's controls much more approachable.
+
+I mostly vibe-coded this project together with Claude, and since it's been genuinely useful for me, I thought I'd share it with anyone else who finds CDDA's keybindings a bit overwhelming.
+
+Hopefully it helps you spend less time memorizing shortcuts and more time surviving the apocalypse. :)
+
 # CDDA Remote
 
 Turn an Android tablet (or any touch device) into a remote control for
