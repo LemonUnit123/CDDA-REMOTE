@@ -17,10 +17,9 @@
     --cyan: #62c3d6;
     --red: #cf5c5c;
     --btn-min: 96px;   /* Buttongröße, via Settings überschrieben */
-    --btn-h: 76px;
   }
-  body[data-size="s"] { --btn-min: 78px; --btn-h: 62px; }
-  body[data-size="l"] { --btn-min: 118px; --btn-h: 94px; }
+  body[data-size="s"] { --btn-min: 78px; }
+  body[data-size="l"] { --btn-min: 118px; }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -47,6 +46,15 @@
     width: 40px; height: 40px; cursor: pointer;
   }
   #gear:active { color: var(--cyan); }
+
+  #quick { display: flex; gap: 6px; }
+  #quick button {
+    font-family: inherit; font-size: 1.05rem;
+    background: var(--panel); color: var(--amber);
+    border: 1px solid var(--panel-edge); border-radius: 8px;
+    width: 44px; height: 44px; cursor: pointer;
+  }
+  #quick button:active { background: var(--amber); color: var(--bg); }
 
   main { display: grid; grid-template-columns: minmax(230px, 32%) 1fr; gap: 10px; min-height: 0; }
   body[data-pad="right"] main { grid-template-columns: 1fr minmax(230px, 32%); }
@@ -84,12 +92,13 @@
   #grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(var(--btn-min), 1fr));
-    grid-auto-rows: minmax(var(--btn-h), auto);
+    align-content: start;
     gap: 8px; overflow-y: auto; padding-bottom: 8px;
   }
   #grid button {
     font-family: inherit; background: var(--panel); color: var(--text);
     border: 1px solid var(--panel-edge); border-radius: 10px;
+    aspect-ratio: 1;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 5px; cursor: pointer; padding: 6px;
   }
@@ -139,6 +148,7 @@
 
 <header>
   <h1>CDDA&nbsp;REMOTE</h1>
+  <div id="quick" aria-label="Quick actions"></div>
   <span id="status">…</span>
   <button id="gear" aria-label="Settings">⚙</button>
 </header>
@@ -282,6 +292,23 @@
     if (symbol === "@") { b.classList.add("at"); b.title = t("waitTurn"); }
     b.addEventListener("pointerdown", e => { e.preventDefault(); send([key]); });
     padEl.appendChild(b);
+  }
+
+  // ---- Quick-Bar (Header) -------------------------------------------------
+  // CDDA-Default: z = reinzoomen, Z = rauszoomen
+  const QUICK = [
+    ["＋", ["z"], "Zoom +"],
+    ["－", ["shift+z"], "Zoom −"],
+    ["↩", ["enter"], "Enter"],
+    ["⎋", ["esc"], "Escape"]
+  ];
+  const quickEl = document.getElementById("quick");
+  for (const [symbol, keys, title] of QUICK) {
+    const b = document.createElement("button");
+    b.textContent = symbol;
+    b.title = title;
+    b.addEventListener("pointerdown", e => { e.preventDefault(); send(keys); });
+    quickEl.appendChild(b);
   }
 
   // ---- Tabs & Grid --------------------------------------------------------
