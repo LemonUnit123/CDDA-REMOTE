@@ -99,6 +99,12 @@ cdda-remote/
     └── index.html     Touch UI, settings panel, i18n
 ```
 
+## Visuals
+
+
+<img width="1280" height="800" alt="overview" src="https://github.com/user-attachments/assets/0b973b36-6335-428f-9509-7ec430bdfb7b" />
+
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
