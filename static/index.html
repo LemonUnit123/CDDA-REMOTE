@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
@@ -16,7 +16,7 @@
     --amber: #e0a458;
     --cyan: #62c3d6;
     --red: #cf5c5c;
-    --btn-min: 96px;   /* Buttongröße, via Settings überschrieben */
+    --btn-min: 96px;   /* button size, overridden via settings */
   }
   body[data-size="s"] { --btn-min: 78px; }
   body[data-size="l"] { --btn-min: 118px; }
@@ -78,6 +78,7 @@
     min-height: 60px; cursor: pointer;
   }
   #pad button:active { background: var(--green); color: var(--bg); }
+  #pad button.repeating { background: var(--green); color: var(--bg); }
   #pad .at { font-size: 1.9rem; color: var(--text); border-color: var(--green); }
 
   #right { display: grid; grid-template-rows: auto 1fr; gap: 8px; min-height: 0; }
@@ -163,24 +164,24 @@
 
 <div id="settings">
   <div class="sheet">
-    <h2 data-i18n="settings">EINSTELLUNGEN</h2>
+    <h2 data-i18n="settings">SETTINGS</h2>
 
     <div class="setting">
-      <span data-i18n="language">Sprache</span>
+      <span data-i18n="language">Language</span>
       <div class="seg" id="segLang"></div>
     </div>
 
     <div class="setting">
-      <span data-i18n="padPos">Bewegungspad</span>
+      <span data-i18n="padPos">Movement pad</span>
       <div class="seg" id="segPad">
-        <button data-v="left" data-i18n="left">Links</button>
-        <button data-v="right" data-i18n="right">Rechts</button>
-        <button data-v="off" data-i18n="hidden">Aus</button>
+        <button data-v="left" data-i18n="left">Left</button>
+        <button data-v="right" data-i18n="right">Right</button>
+        <button data-v="off" data-i18n="hidden">Off</button>
       </div>
     </div>
 
     <div class="setting">
-      <span data-i18n="btnSize">Buttongröße</span>
+      <span data-i18n="btnSize">Button size</span>
       <div class="seg" id="segSize">
         <button data-v="s">S</button>
         <button data-v="m">M</button>
@@ -189,39 +190,50 @@
     </div>
 
     <div class="setting">
-      <span data-i18n="vibration">Vibration</span>
-      <div class="seg" id="segVib">
-        <button data-v="on" data-i18n="on">An</button>
-        <button data-v="off" data-i18n="off">Aus</button>
+      <span data-i18n="holdRepeat">Hold to walk</span>
+      <div class="seg" id="segRepeat">
+        <button data-v="off" data-i18n="off">Off</button>
+        <button data-v="slow" data-i18n="slow">Slow</button>
+        <button data-v="fast" data-i18n="fast">Fast</button>
       </div>
     </div>
 
-    <button id="closeSettings" data-i18n="close">Schließen</button>
+    <div class="setting">
+      <span data-i18n="vibration">Vibration</span>
+      <div class="seg" id="segVib">
+        <button data-v="on" data-i18n="on">On</button>
+        <button data-v="off" data-i18n="off">Off</button>
+      </div>
+    </div>
+
+    <button id="closeSettings" data-i18n="close">Close</button>
   </div>
 </div>
 
 <script>
-  // ---- UI-Übersetzungen ---------------------------------------------------
+  // ---- UI translations ----------------------------------------------------
   const I18N = {
     de: { settings: "EINSTELLUNGEN", language: "Sprache", padPos: "Bewegungspad",
           left: "Links", right: "Rechts", hidden: "Aus", btnSize: "Buttongröße",
           vibration: "Vibration", on: "An", off: "Aus", close: "Schließen",
+          holdRepeat: "Halten = laufen", slow: "Langsam", fast: "Schnell",
           connected: "verbunden", windowFound: "CDDA gefunden",
           windowMissing: "CDDA-Fenster fehlt", serverDown: "Server nicht erreichbar",
           configError: "buttons.json nicht ladbar", waitTurn: "Warten (1 Zug)" },
     en: { settings: "SETTINGS", language: "Language", padPos: "Movement pad",
           left: "Left", right: "Right", hidden: "Off", btnSize: "Button size",
           vibration: "Vibration", on: "On", off: "Off", close: "Close",
+          holdRepeat: "Hold to walk", slow: "Slow", fast: "Fast",
           connected: "connected", windowFound: "CDDA found",
           windowMissing: "CDDA window missing", serverDown: "Server unreachable",
           configError: "Cannot load buttons.json", waitTurn: "Wait (1 turn)" }
   };
 
   // ---- Settings (localStorage) --------------------------------------------
-  const DEFAULTS = { lang: "en", pad: "left", size: "m", vib: "on" };
+  const DEFAULTS = { lang: "en", pad: "left", size: "m", vib: "on", repeat: "slow" };
   let settings = { ...DEFAULTS };
   try { Object.assign(settings, JSON.parse(localStorage.getItem("cddaRemote") || "{}")); }
-  catch { /* defekte Daten ignorieren */ }
+  catch { /* ignore corrupted data */ }
 
   function saveSettings() {
     localStorage.setItem("cddaRemote", JSON.stringify(settings));
@@ -236,14 +248,14 @@
   let activeTab = null;
   let lastStatus = { key: "connected", err: false };
 
-  // ---- Anwenden aller Settings auf die UI ---------------------------------
+  // ---- Apply all settings to the UI ---------------------------------------
   function applySettings() {
     document.body.dataset.pad = settings.pad;
     document.body.dataset.size = settings.size;
     document.documentElement.lang = settings.lang;
     for (const el of document.querySelectorAll("[data-i18n]"))
       el.textContent = t(el.dataset.i18n);
-    for (const [segId, key] of [["segPad","pad"],["segSize","size"],["segVib","vib"],["segLang","lang"]])
+    for (const [segId, key] of [["segPad","pad"],["segSize","size"],["segVib","vib"],["segRepeat","repeat"],["segLang","lang"]])
       for (const b of document.getElementById(segId).children)
         b.classList.toggle("on", b.dataset.v === settings[key]);
     if (config) { renderTabs(); showTab(activeTab); }
@@ -256,13 +268,13 @@
     statusEl.classList.toggle("err", !!isError);
   }
 
-  // ---- Label-Auflösung: String oder {de,en,...} ---------------------------
+  // ---- Label resolution: plain string or {de,en,...} ----------------------
   function label(obj) {
     if (typeof obj === "string") return obj;
     return obj[settings.lang] || obj.en || Object.values(obj)[0] || "?";
   }
 
-  // ---- Tastendruck senden -------------------------------------------------
+  // ---- Send keystrokes ----------------------------------------------------
   async function send(keys) {
     if (settings.vib === "on" && navigator.vibrate) navigator.vibrate(15);
     try {
@@ -279,23 +291,60 @@
     }
   }
 
-  // ---- Bewegungspad -------------------------------------------------------
+  // ---- Movement pad -------------------------------------------------------
+  // Tap = one step. Hold beyond HOLD_DELAY = repeated steps until release.
+  // The delay makes a slightly long tap safe: repeating only starts on
+  // deliberate holding, never on a normal press.
+  const HOLD_DELAY = 400;                          // ms before repeating starts
+  const REPEAT_MS = { slow: 300, fast: 160 };      // interval per speed setting
+
   const PAD = [
     ["↖", "y"], ["↑", "k"], ["↗", "u"],
     ["←", "h"], ["@", "."], ["→", "l"],
     ["↙", "b"], ["↓", "j"], ["↘", "n"]
   ];
   const padEl = document.getElementById("pad");
+
+  let holdTimer = null;   // timeout until repeating begins
+  let repeatTimer = null; // interval while repeating
+
+  function stopRepeat() {
+    clearTimeout(holdTimer);
+    clearInterval(repeatTimer);
+    holdTimer = repeatTimer = null;
+    padEl.querySelectorAll(".repeating").forEach(el => el.classList.remove("repeating"));
+  }
+
+  function startPad(button, key) {
+    stopRepeat();
+    send([key]);                       // first step fires immediately
+    if (settings.repeat === "off") return;
+    holdTimer = setTimeout(() => {
+      button.classList.add("repeating");
+      repeatTimer = setInterval(() => send([key]), REPEAT_MS[settings.repeat]);
+    }, HOLD_DELAY);
+  }
+
   for (const [symbol, key] of PAD) {
     const b = document.createElement("button");
     b.textContent = symbol;
     if (symbol === "@") { b.classList.add("at"); b.title = t("waitTurn"); }
-    b.addEventListener("pointerdown", e => { e.preventDefault(); send([key]); });
+    b.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      b.setPointerCapture?.(e.pointerId);
+      startPad(b, key);
+    });
+    for (const evt of ["pointerup", "pointercancel", "pointerleave"])
+      b.addEventListener(evt, stopRepeat);
     padEl.appendChild(b);
   }
 
-  // ---- Quick-Bar (Header) -------------------------------------------------
-  // CDDA-Default: z = reinzoomen, Z = rauszoomen
+  // Safety net: stop repeating if the app loses focus mid-hold
+  window.addEventListener("blur", stopRepeat);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) stopRepeat(); });
+
+  // ---- Quick bar (header) -------------------------------------------------
+  // CDDA defaults: z = zoom in, Z = zoom out
   const QUICK = [
     ["＋", ["z"], "Zoom +"],
     ["－", ["shift+z"], "Zoom −"],
@@ -364,10 +413,11 @@
   bindSegment("segPad", "pad");
   bindSegment("segSize", "size");
   bindSegment("segVib", "vib");
+  bindSegment("segRepeat", "repeat");
   bindSegment("segLang", "lang");
 
-  // Sprachauswahl dynamisch aus buttons.json ableiten (alle Codes, die in
-  // Labels vorkommen) + alle UI-Sprachen
+  // Derive language options dynamically from buttons.json (every code that
+  // appears in labels) plus all built-in UI languages
   function buildLangSegment() {
     const langs = new Set(Object.keys(I18N));
     for (const tab of config.tabs) {
