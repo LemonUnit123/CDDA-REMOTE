@@ -1,5 +1,11 @@
 {
-  "_note": "Editable. 'keys' is a sequence; each key uses the Python 'keyboard' library format (e.g. 'g', 'shift+e', 'esc', 'enter', 'tab', 'space'). No server restart needed - just reload the page. Labels support any language code; add e.g. \"fr\": \"...\" and it appears in settings automatically.",
+  "_note": "Editable. 'keys' is a sequence; each key uses the Python 'keyboard' library format (e.g. 'g', 'shift+e', 'esc', 'enter', 'tab', 'space'). No server restart needed - just reload the page. Labels support any language code; add e.g. \"fr\": \"...\" and it appears in settings automatically. 'hotbar' holds the always-visible row above the movement pad.",
+  "hotbar": [
+    { "icon": "＋", "label": { "de": "Zoom +", "en": "Zoom in" }, "keys": ["z"] },
+    { "icon": "－", "label": { "de": "Zoom −", "en": "Zoom out" }, "keys": ["shift+z"] },
+    { "icon": "↩", "label": { "de": "Enter", "en": "Enter" }, "keys": ["enter"] },
+    { "icon": "⎋", "label": { "de": "Escape", "en": "Escape" }, "keys": ["esc"] }
+  ],
   "tabs": [
     {
       "id": "world",
@@ -23,6 +29,7 @@
       "id": "body",
       "label": { "de": "Körper", "en": "Body" },
       "buttons": [
+        { "icon": "🚶", "label": { "de": "Bewegungsmodus", "en": "Movement mode" }, "keys": ["shift+2"] },
         { "icon": "🎒", "label": { "de": "Inventar", "en": "Inventory" }, "keys": ["i"] },
         { "icon": "🍖", "label": { "de": "Essen", "en": "Eat" }, "keys": ["shift+e"] },
         { "icon": "🧥", "label": { "de": "Anziehen", "en": "Wear" }, "keys": ["shift+w"] },

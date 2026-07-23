@@ -1,10 +1,5 @@
 """
 CDDA Remote - small LAN server that injects keystrokes into the game.
-	   
-		
-	  
-	  
-	  
 
 Start:   python server.py
 Tablet:  http://<PC-IP>:5000  (the IP is printed on startup)
@@ -15,6 +10,9 @@ as long as CDDA itself is not running as administrator.
 """
 
 import ctypes
+import json
+import os
+import shutil
 import socket
 import time
 
@@ -103,6 +101,47 @@ def send_key():
         if i > 0:
             time.sleep(KEY_DELAY)
         keyboard.send(key)
+
+    return jsonify(ok=True)
+
+
+@app.post("/buttons")
+def save_buttons():
+    """Persist an edited button configuration sent by the web UI.
+
+    The payload is validated structurally before writing. A one-time backup
+    of the original file is kept as buttons.backup.json.
+    """
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or not isinstance(data.get("tabs"), list):
+        return jsonify(ok=False, error="invalid config: 'tabs' missing"), 400
+
+    for tab in data["tabs"]:
+        if not isinstance(tab, dict) or "id" not in tab or "buttons" not in tab:
+            return jsonify(ok=False, error="invalid tab entry"), 400
+        for btn in tab["buttons"]:
+            if not isinstance(btn.get("keys"), list) or not btn["keys"]:
+                return jsonify(ok=False, error="button without keys"), 400
+
+    if "hotbar" in data:
+        if not isinstance(data["hotbar"], list):
+            return jsonify(ok=False, error="'hotbar' must be a list"), 400
+        for btn in data["hotbar"]:
+            if not isinstance(btn.get("keys"), list) or not btn["keys"]:
+                return jsonify(ok=False, error="hotbar button without keys"), 400
+
+    here = os.path.dirname(os.path.abspath(__file__))
+    target = os.path.join(here, "buttons.json")
+    backup = os.path.join(here, "buttons.backup.json")
+
+    if os.path.exists(target) and not os.path.exists(backup):
+        shutil.copyfile(target, backup)
+
+    # atomic write: temp file in the same directory, then replace
+    tmp = target + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, target)
 
     return jsonify(ok=True)
 

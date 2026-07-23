@@ -33,7 +33,23 @@
     user-select: none;
   }
 
-  body { display: grid; grid-template-rows: auto 1fr; gap: 8px; padding: 10px; }
+  body { display: grid; gap: 8px; padding: 10px; }
+  header { grid-area: hd; }
+  #hotbar { grid-area: hb; }
+  main { grid-area: mn; }
+
+  body[data-hotbar="top"] {
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas: "hd" "hb" "mn";
+  }
+  body[data-hotbar="left"] {
+    grid-template-columns: auto 1fr; grid-template-rows: auto 1fr;
+    grid-template-areas: "hd hd" "hb mn";
+  }
+  body[data-hotbar="right"] {
+    grid-template-columns: 1fr auto; grid-template-rows: auto 1fr;
+    grid-template-areas: "hd hd" "mn hb";
+  }
 
   header { display: flex; align-items: center; gap: 12px; padding: 4px 6px; }
   header h1 { font-size: 0.95rem; font-weight: 600; letter-spacing: 0.12em; color: var(--green); }
@@ -47,14 +63,42 @@
   }
   #gear:active { color: var(--cyan); }
 
-  #quick { display: flex; gap: 6px; }
-  #quick button {
-    font-family: inherit; font-size: 1.05rem;
-    background: var(--panel); color: var(--amber);
-    border: 1px solid var(--panel-edge); border-radius: 8px;
-    width: 44px; height: 44px; cursor: pointer;
+  #hotbar {
+    display: flex; gap: 6px; align-items: stretch;
+    padding: 6px; background: var(--panel);
+    border: 1px solid var(--panel-edge); border-radius: 10px;
+    overflow-x: auto;
   }
-  #quick button:active { background: var(--amber); color: var(--bg); }
+  /* Side placement: vertical column, buttons shaped like the grid tiles */
+  body[data-hotbar="left"] #hotbar, body[data-hotbar="right"] #hotbar {
+    flex-direction: column; overflow-x: visible; overflow-y: auto;
+  }
+  body[data-hotbar="left"] #hotbar button,
+  body[data-hotbar="right"] #hotbar button {
+    width: var(--btn-min); height: auto; aspect-ratio: 1; flex: 0 0 auto;
+    gap: 5px;
+  }
+  body[data-hotbar="left"] #hotbar button .ico,
+  body[data-hotbar="right"] #hotbar button .ico { font-size: 1.5rem; }
+  body[data-hotbar="left"] #hotbar button .lbl,
+  body[data-hotbar="right"] #hotbar button .lbl { font-size: 0.72rem; }
+  #hotbar button {
+    font-family: inherit;
+    background: #101713; color: var(--amber);
+    border: 1px solid var(--panel-edge); border-radius: 8px;
+    min-width: 62px; height: 52px; flex: 1 1 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 2px; cursor: pointer; padding: 4px;
+  }
+  #hotbar button .ico { font-size: 1.25rem; line-height: 1; }
+  #hotbar button .lbl { font-size: 0.6rem; color: var(--dim); }
+  #hotbar button:active { background: var(--amber); }
+  #hotbar button:active .ico, #hotbar button:active .lbl { color: var(--bg); }
+  #hotbar button.repeat { color: var(--cyan); border-color: var(--cyan); flex: 0 0 auto; }
+  #hotbar button.repeat:active { background: var(--cyan); }
+  #hotbar button.repeat[disabled] { color: var(--dim); border-color: var(--panel-edge); }
+  body.editing #hotbar button:not(.repeat) { border-style: dashed; border-color: var(--cyan); }
+  #hotbar button.add { color: var(--cyan); border-style: dashed; flex: 0 0 auto; }
 
   main { display: grid; grid-template-columns: minmax(230px, 32%) 1fr; gap: 10px; min-height: 0; }
   body[data-pad="right"] main { grid-template-columns: 1fr minmax(230px, 32%); }
@@ -64,6 +108,15 @@
   @media (max-width: 640px) and (orientation: portrait) {
     main { grid-template-columns: 1fr !important; grid-template-rows: auto 1fr; }
     body[data-pad="right"] #pad { order: 0; }
+    /* Too narrow for a side column - fall back to the horizontal hotbar */
+    body { grid-template-columns: 1fr !important; grid-template-rows: auto auto 1fr !important;
+           grid-template-areas: "hd" "hb" "mn" !important; }
+    #hotbar { flex-direction: row !important; overflow-x: auto !important; }
+    #hotbar button { width: auto !important; height: 52px !important;
+                     aspect-ratio: auto !important; flex: 1 1 0 !important; }
+    #hotbar button .ico { font-size: 1.25rem !important; }
+    #hotbar button .lbl { font-size: 0.6rem !important; }
+    #hotbar button.repeat, #hotbar button.add { flex: 0 0 auto !important; }
   }
 
   #pad {
@@ -139,20 +192,75 @@
     border: 1px solid var(--panel-edge); border-radius: 8px; cursor: pointer;
   }
 
+  /* ---------- Editor ---------- */
+  #pencil {
+    font-family: inherit; font-size: 1rem;
+    background: var(--panel); color: var(--dim);
+    border: 1px solid var(--panel-edge); border-radius: 8px;
+    width: 40px; height: 40px; cursor: pointer;
+  }
+  body.editing #pencil { color: var(--cyan); border-color: var(--cyan); }
+  body.editing #grid button { border-style: dashed; border-color: var(--cyan); }
+  #grid button.add { color: var(--cyan); border-style: dashed; }
+  #grid button.add .ico { font-size: 2rem; }
+
+  #editor, #tabEditor {
+    position: fixed; inset: 0; background: rgba(6, 9, 8, 0.9);
+    display: none; align-items: center; justify-content: center; z-index: 20;
+    padding: 12px;
+  }
+  #editor.open, #tabEditor.open { display: flex; }
+  #editor .sheet, #tabEditor .sheet {
+    background: var(--panel); border: 1px solid var(--panel-edge); border-radius: 12px;
+    padding: 18px; width: min(460px, 94vw); max-height: 92vh; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  #editor h2, #tabEditor h2 { font-size: 0.9rem; letter-spacing: 0.1em; color: var(--cyan); }
+  nav button.tabtool { flex: 0 0 auto; min-width: 44px; color: var(--cyan); border-style: dashed; }
+  body.editing nav button:not(.tabtool) { border-style: dashed; border-color: var(--cyan); }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field > label { font-size: 0.72rem; color: var(--dim); }
+  .field input, .field select {
+    font-family: inherit; font-size: 0.9rem; padding: 10px;
+    background: #101713; color: var(--text);
+    border: 1px solid var(--panel-edge); border-radius: 8px;
+  }
+  .field .hint { font-size: 0.66rem; color: var(--dim); }
+  #iconPalette {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 5px; max-height: 132px; overflow-y: auto;
+  }
+  #iconPalette button {
+    font-family: inherit; font-size: 1.2rem; aspect-ratio: 1;
+    background: #101713; color: var(--text);
+    border: 1px solid var(--panel-edge); border-radius: 6px; cursor: pointer;
+  }
+  #iconPalette button:active { background: var(--cyan); }
+  .editRow { display: flex; gap: 8px; }
+  .editRow button {
+    flex: 1; font-family: inherit; font-size: 0.82rem; padding: 12px 6px;
+    background: #101713; color: var(--text);
+    border: 1px solid var(--panel-edge); border-radius: 8px; cursor: pointer;
+  }
+  .editRow button.danger { color: var(--red); border-color: var(--red); }
+  .editRow button.primary { color: var(--green); border-color: var(--green); }
+
   button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
   @media (prefers-reduced-motion: no-preference) {
     #grid button, #pad button, nav button, .seg button { transition: background 80ms; }
   }
 </style>
 </head>
-<body data-pad="left" data-size="m">
+<body data-pad="left" data-size="m" data-hotbar="top">
 
 <header>
   <h1>CDDA&nbsp;REMOTE</h1>
-  <div id="quick" aria-label="Quick actions"></div>
   <span id="status">…</span>
+  <button id="pencil" aria-label="Edit buttons">✎</button>
   <button id="gear" aria-label="Settings">⚙</button>
 </header>
+
+<div id="hotbar" aria-label="Hotbar"></div>
 
 <main>
   <div id="pad" aria-label="Movement"></div>
@@ -190,6 +298,15 @@
     </div>
 
     <div class="setting">
+      <span data-i18n="hotbarPos">Hotbar</span>
+      <div class="seg" id="segHotbar">
+        <button data-v="top" data-i18n="top">Top</button>
+        <button data-v="left" data-i18n="left">Left</button>
+        <button data-v="right" data-i18n="right">Right</button>
+      </div>
+    </div>
+
+    <div class="setting">
       <span data-i18n="holdRepeat">Hold to walk</span>
       <div class="seg" id="segRepeat">
         <button data-v="off" data-i18n="off">Off</button>
@@ -210,6 +327,68 @@
   </div>
 </div>
 
+<div id="tabEditor">
+  <div class="sheet">
+    <h2 id="tabEditorTitle" data-i18n="editTab">EDIT TAB</h2>
+
+    <div class="field">
+      <label data-i18n="tabName">Name</label>
+      <input id="fTabName" placeholder="Vehicle">
+    </div>
+
+    <div class="editRow" id="tabMoveRow">
+      <button id="btnTabLeft">◀ <span data-i18n="moveLeft">Move</span></button>
+      <button id="btnTabRight"><span data-i18n="moveRight">Move</span> ▶</button>
+    </div>
+
+    <div class="editRow">
+      <button id="btnTabDelete" class="danger" data-i18n="delete">Delete</button>
+      <button id="btnTabCancel" data-i18n="cancel">Cancel</button>
+      <button id="btnTabSave" class="primary" data-i18n="save">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="editor">
+  <div class="sheet">
+    <h2 id="editorTitle" data-i18n="editButton">EDIT BUTTON</h2>
+
+    <div class="field">
+      <label data-i18n="icon">Icon</label>
+      <input id="fIcon" maxlength="4" placeholder="🔧">
+      <div class="hint" data-i18n="iconHint">Any emoji or character. Tap one below or use your keyboard.</div>
+      <div id="iconPalette"></div>
+    </div>
+
+    <div class="field">
+      <label data-i18n="labelText">Label</label>
+      <input id="fLabel" placeholder="Use item">
+    </div>
+
+    <div class="field">
+      <label data-i18n="keysLabel">Keys</label>
+      <input id="fKeys" placeholder="a">
+      <div class="hint" data-i18n="keysHint">Comma-separated sequence, e.g. esc, s — use shift+e for capitals.</div>
+    </div>
+
+    <div class="field">
+      <label data-i18n="tabLabel">Tab</label>
+      <select id="fTab"></select>
+    </div>
+
+    <div class="editRow" id="moveRow">
+      <button id="btnLeft">◀ <span data-i18n="moveLeft">Move</span></button>
+      <button id="btnRight"><span data-i18n="moveRight">Move</span> ▶</button>
+    </div>
+
+    <div class="editRow">
+      <button id="btnDelete" class="danger" data-i18n="delete">Delete</button>
+      <button id="btnCancel" data-i18n="cancel">Cancel</button>
+      <button id="btnSave" class="primary" data-i18n="save">Save</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // ---- UI translations ----------------------------------------------------
   const I18N = {
@@ -217,6 +396,18 @@
           left: "Links", right: "Rechts", hidden: "Aus", btnSize: "Buttongröße",
           vibration: "Vibration", on: "An", off: "Aus", close: "Schließen",
           holdRepeat: "Halten = laufen", slow: "Langsam", fast: "Schnell",
+          editButton: "BUTTON BEARBEITEN", newButton: "NEUER BUTTON",
+          icon: "Icon", iconHint: "Beliebiges Emoji oder Zeichen. Unten antippen oder Tastatur nutzen.",
+          labelText: "Beschriftung",
+          keysLabel: "Tasten", keysHint: "Sequenz mit Komma trennen, z.B. esc, s — Großbuchstaben als shift+e.",
+          tabLabel: "Tab", moveLeft: "Nach vorn", moveRight: "Nach hinten",
+          delete: "Löschen", cancel: "Abbrechen", save: "Speichern",
+          saved: "gespeichert", saveFailed: "Speichern fehlgeschlagen",
+          needKeys: "Bitte mindestens eine Taste angeben",
+          hotbar: "Hotbar", repeatLast: "Letzte Aktion wiederholen",
+          hotbarPos: "Hotbar-Position", top: "Oben",
+          newTab: "NEUER TAB", editTab: "TAB BEARBEITEN", tabName: "Name",
+          confirmDelete: "Wirklich löschen?", needName: "Bitte einen Namen angeben",
           connected: "verbunden", windowFound: "CDDA gefunden",
           windowMissing: "CDDA-Fenster fehlt", serverDown: "Server nicht erreichbar",
           configError: "buttons.json nicht ladbar", waitTurn: "Warten (1 Zug)" },
@@ -224,13 +415,25 @@
           left: "Left", right: "Right", hidden: "Off", btnSize: "Button size",
           vibration: "Vibration", on: "On", off: "Off", close: "Close",
           holdRepeat: "Hold to walk", slow: "Slow", fast: "Fast",
+          editButton: "EDIT BUTTON", newButton: "NEW BUTTON",
+          icon: "Icon", iconHint: "Any emoji or character. Tap one below or use your keyboard.",
+          labelText: "Label",
+          keysLabel: "Keys", keysHint: "Comma-separated sequence, e.g. esc, s — use shift+e for capitals.",
+          tabLabel: "Tab", moveLeft: "Move up", moveRight: "Move down",
+          delete: "Delete", cancel: "Cancel", save: "Save",
+          saved: "saved", saveFailed: "Save failed",
+          needKeys: "Please enter at least one key",
+          hotbar: "Hotbar", repeatLast: "Repeat last action",
+          hotbarPos: "Hotbar position", top: "Top",
+          newTab: "NEW TAB", editTab: "EDIT TAB", tabName: "Name",
+          confirmDelete: "Really delete?", needName: "Please enter a name",
           connected: "connected", windowFound: "CDDA found",
           windowMissing: "CDDA window missing", serverDown: "Server unreachable",
           configError: "Cannot load buttons.json", waitTurn: "Wait (1 turn)" }
   };
 
   // ---- Settings (localStorage) --------------------------------------------
-  const DEFAULTS = { lang: "en", pad: "left", size: "m", vib: "on", repeat: "slow" };
+  const DEFAULTS = { lang: "en", pad: "left", size: "m", vib: "on", repeat: "slow", hotbar: "top" };
   let settings = { ...DEFAULTS };
   try { Object.assign(settings, JSON.parse(localStorage.getItem("cddaRemote") || "{}")); }
   catch { /* ignore corrupted data */ }
@@ -251,14 +454,15 @@
   // ---- Apply all settings to the UI ---------------------------------------
   function applySettings() {
     document.body.dataset.pad = settings.pad;
+    document.body.dataset.hotbar = settings.hotbar;
     document.body.dataset.size = settings.size;
     document.documentElement.lang = settings.lang;
     for (const el of document.querySelectorAll("[data-i18n]"))
       el.textContent = t(el.dataset.i18n);
-    for (const [segId, key] of [["segPad","pad"],["segSize","size"],["segVib","vib"],["segRepeat","repeat"],["segLang","lang"]])
+    for (const [segId, key] of [["segPad","pad"],["segHotbar","hotbar"],["segSize","size"],["segVib","vib"],["segRepeat","repeat"],["segLang","lang"]])
       for (const b of document.getElementById(segId).children)
         b.classList.toggle("on", b.dataset.v === settings[key]);
-    if (config) { renderTabs(); showTab(activeTab); }
+    if (config) { renderTabs(); renderHotbar(); showTab(activeTab); }
     setStatus(lastStatus.key, lastStatus.err);
   }
 
@@ -343,21 +547,62 @@
   window.addEventListener("blur", stopRepeat);
   document.addEventListener("visibilitychange", () => { if (document.hidden) stopRepeat(); });
 
-  // ---- Quick bar (header) -------------------------------------------------
-  // CDDA defaults: z = zoom in, Z = zoom out
-  const QUICK = [
-    ["＋", ["z"], "Zoom +"],
-    ["－", ["shift+z"], "Zoom −"],
-    ["↩", ["enter"], "Enter"],
-    ["⎋", ["esc"], "Escape"]
-  ];
-  const quickEl = document.getElementById("quick");
-  for (const [symbol, keys, title] of QUICK) {
-    const b = document.createElement("button");
-    b.textContent = symbol;
-    b.title = title;
-    b.addEventListener("pointerdown", e => { e.preventDefault(); send(keys); });
-    quickEl.appendChild(b);
+  // ---- Hotbar -------------------------------------------------------------
+  // Always-visible row of user-defined shortcuts, plus a repeat button that
+  // re-fires the last action. Movement steps deliberately do not count as an
+  // action - the pad already has hold-to-repeat, and repeating a step would
+  // constantly overwrite the action you actually want to repeat.
+  const hotbarEl = document.getElementById("hotbar");
+  let lastAction = null;   // { keys, icon } of the last non-movement button
+
+  function renderHotbar() {
+    hotbarEl.innerHTML = "";
+    const list = config.hotbar || (config.hotbar = []);
+
+    list.forEach((def, index) => {
+      const b = document.createElement("button");
+      const ico = document.createElement("span");
+      ico.className = "ico"; ico.textContent = def.icon;
+      const lbl = document.createElement("span");
+      lbl.className = "lbl"; lbl.textContent = label(def.label);
+      b.append(ico, lbl);
+      b.addEventListener("pointerdown", e => {
+        e.preventDefault();
+        if (editing) openEditor(index, HOTBAR);
+        else fire(def);
+      });
+      hotbarEl.appendChild(b);
+    });
+
+    if (editing) {
+      const add = document.createElement("button");
+      add.className = "add";
+      add.innerHTML = '<span class="ico">+</span>';
+      add.addEventListener("click", () => openEditor(null, HOTBAR));
+      hotbarEl.appendChild(add);
+    }
+
+    const rep = document.createElement("button");
+    rep.className = "repeat";
+    rep.title = t("repeatLast");
+    rep.innerHTML = `<span class="ico">⟳</span><span class="lbl">${lastAction ? lastAction.icon : "–"}</span>`;
+    rep.disabled = !lastAction;
+    rep.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      if (lastAction) send(lastAction.keys);
+    });
+    hotbarEl.appendChild(rep);
+  }
+
+  // Fire an action button and remember it for the repeat button
+  function fire(def) {
+    lastAction = { keys: def.keys, icon: def.icon };
+    send(def.keys);
+    const rep = hotbarEl.querySelector(".repeat");
+    if (rep) {
+      rep.disabled = false;
+      rep.querySelector(".lbl").textContent = def.icon;
+    }
   }
 
   // ---- Tabs & Grid --------------------------------------------------------
@@ -374,6 +619,21 @@
       b.addEventListener("click", () => showTab(tab.id));
       tabsEl.appendChild(b);
     }
+    if (editing) {
+      const edit = document.createElement("button");
+      edit.className = "tabtool";
+      edit.textContent = "✎";
+      edit.title = t("editTab");
+      edit.addEventListener("click", () => openTabEditor(activeTab));
+      tabsEl.appendChild(edit);
+
+      const add = document.createElement("button");
+      add.className = "tabtool";
+      add.textContent = "+";
+      add.title = t("newTab");
+      add.addEventListener("click", () => openTabEditor(null));
+      tabsEl.appendChild(add);
+    }
   }
 
   function showTab(id) {
@@ -383,23 +643,288 @@
     gridEl.innerHTML = "";
     const tab = config.tabs.find(x => x.id === id);
     if (!tab) return;
-    for (const def of tab.buttons) {
+    tab.buttons.forEach((def, index) => {
       const b = document.createElement("button");
       const ico = document.createElement("span");
       ico.className = "ico"; ico.textContent = def.icon;
       const lbl = document.createElement("span");
       lbl.className = "lbl"; lbl.textContent = label(def.label);
       b.append(ico, lbl);
-      b.addEventListener("pointerdown", e => { e.preventDefault(); send(def.keys); });
+      b.addEventListener("pointerdown", e => {
+        e.preventDefault();
+        if (editing) openEditor(index, activeTab);   // edit instead of firing
+        else fire(def);
+      });
       gridEl.appendChild(b);
+    });
+    if (editing) {
+      const add = document.createElement("button");
+      add.className = "add";
+      add.innerHTML = '<span class="ico">+</span>';
+      add.addEventListener("click", () => openEditor(null, activeTab));
+      gridEl.appendChild(add);
     }
   }
+
+  // ---- Button editor ------------------------------------------------------
+  // Edit mode turns the grid into an editable surface: tapping a button opens
+  // the editor instead of sending its keys. Changes are written back to
+  // buttons.json on the server, so they persist for every device.
+  let editing = false;
+  let editIndex = null;   // index inside the edited list, or null for a new button
+  let editList = null;    // tab id, or HOTBAR for the hotbar
+  let editOriginalLabel = null;  // keeps built-in translations intact if untouched
+  const HOTBAR = "__hotbar";
+
+  // Return the button array for a list id
+  function listOf(id) {
+    if (id === HOTBAR) return config.hotbar || (config.hotbar = []);
+    const tab = config.tabs.find(x => x.id === id);
+    return tab ? tab.buttons : null;
+  }
+
+  const ICON_PALETTE = [
+    "🎒","🍖","💧","🧥","👕","🗡","🔧","📥","🎯","🤾","📤","😴","🧍","🩹","💊",
+    "⇣","👁","✋","🚪","🔒","💥","🔪","⬆","⬇","📋","🗺","🧲","🔦","🔥","🧗",
+    "🛠","🏗","📜","🚗","💬","🧠","⏳","🛡","🧭","📖","🔍","⚙","🧰","🪓","🔫",
+    "↩","⎋","⇥","␣","❓","✖","💾","➕","➖","⏱","🚶","🧎","🛌","🏃","👣"
+  ];
+
+  const editorEl = document.getElementById("editor");
+  const fIcon = document.getElementById("fIcon");
+  const fLabel = document.getElementById("fLabel");
+  const fKeys = document.getElementById("fKeys");
+  const fTab = document.getElementById("fTab");
+
+  // Build the icon palette once
+  const paletteEl = document.getElementById("iconPalette");
+  for (const icon of ICON_PALETTE) {
+    const b = document.createElement("button");
+    b.textContent = icon;
+    b.addEventListener("click", () => { fIcon.value = icon; });
+    paletteEl.appendChild(b);
+  }
+
+  function openEditor(index, listId) {
+    editIndex = index;
+    editList = listId;
+    const def = index === null ? null : listOf(listId)[index];
+
+    document.getElementById("editorTitle").textContent =
+      t(index === null ? "newButton" : "editButton");
+    fIcon.value = def ? def.icon : "";
+    editOriginalLabel = def ? def.label : null;
+    fLabel.value = def ? label(def.label) : "";
+    fKeys.value = def ? def.keys.join(", ") : "";
+
+    fTab.innerHTML = "";
+    const hotOpt = document.createElement("option");
+    hotOpt.value = HOTBAR;
+    hotOpt.textContent = t("hotbar");
+    hotOpt.selected = listId === HOTBAR;
+    fTab.appendChild(hotOpt);
+    for (const tb of config.tabs) {
+      const opt = document.createElement("option");
+      opt.value = tb.id;
+      opt.textContent = label(tb.label);
+      opt.selected = tb.id === listId;
+      fTab.appendChild(opt);
+    }
+
+    document.getElementById("btnDelete").style.display = def ? "" : "none";
+    document.getElementById("moveRow").style.display = def ? "" : "none";
+    editorEl.classList.add("open");
+  }
+
+  function closeEditor() {
+    editorEl.classList.remove("open");
+    editIndex = null;
+    editList = null;
+  }
+
+  async function persist() {
+    try {
+      const res = await fetch("/buttons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config)
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error();
+      setStatus("saved", false);
+    } catch {
+      setStatus("saveFailed", true);
+    }
+    renderTabs();
+    renderHotbar();
+    showTab(activeTab);
+  }
+
+  document.getElementById("btnSave").addEventListener("click", () => {
+    const keys = fKeys.value.split(",").map(k => k.trim()).filter(Boolean);
+    if (!keys.length) { setStatus("needKeys", true); return; }
+
+    const text = fLabel.value.trim();
+    // Keep a built-in multilingual label as long as the text was not edited;
+    // once the user changes it, the button gets one language-independent name.
+    const unchanged = editOriginalLabel && typeof editOriginalLabel === "object"
+      && text === label(editOriginalLabel);
+
+    const def = {
+      icon: fIcon.value.trim() || "•",
+      label: unchanged ? editOriginalLabel : text,
+      keys
+    };
+
+    const source = listOf(editList);
+    if (editIndex === null) source.push(def);
+    else source[editIndex] = def;
+
+    // Move to another list if the selection changed
+    const targetId = fTab.value;
+    if (targetId !== editList) {
+      const from = editIndex === null ? source.length - 1 : editIndex;
+      const [moved] = source.splice(from, 1);
+      listOf(targetId).push(moved);
+    }
+
+    closeEditor();
+    persist();
+  });
+
+  document.getElementById("btnDelete").addEventListener("click", () => {
+    if (editIndex === null) return;
+    listOf(editList).splice(editIndex, 1);
+    closeEditor();
+    persist();
+  });
+
+  function moveButton(offset) {
+    if (editIndex === null) return;
+    const list = listOf(editList);
+    const target = editIndex + offset;
+    if (target < 0 || target >= list.length) return;
+    [list[editIndex], list[target]] = [list[target], list[editIndex]];
+    editIndex = target;
+    persist();
+  }
+  document.getElementById("btnLeft").addEventListener("click", () => moveButton(-1));
+  document.getElementById("btnRight").addEventListener("click", () => moveButton(1));
+
+  document.getElementById("btnCancel").addEventListener("click", closeEditor);
+
+  // Close on backdrop tap only if the gesture both started and ended on the
+  // backdrop. Without this, the pointerdown that opens the editor is followed
+  // by a click landing on the freshly shown overlay, closing it instantly.
+  let backdropDown = false;
+  editorEl.addEventListener("pointerdown", e => { backdropDown = e.target === editorEl; });
+  editorEl.addEventListener("click", e => {
+    if (backdropDown && e.target === editorEl) closeEditor();
+    backdropDown = false;
+  });
+
+  // ---- Tab editor ---------------------------------------------------------
+  // Create, rename, reorder and delete tabs. Deleting takes the tab's buttons
+  // with it, so it needs a second tap to confirm, and the last tab is kept.
+  const tabEditorEl = document.getElementById("tabEditor");
+  const fTabName = document.getElementById("fTabName");
+  const btnTabDelete = document.getElementById("btnTabDelete");
+  let editTabId = null;
+  let deleteArmed = false;
+
+  function resetDeleteButton() {
+    deleteArmed = false;
+    btnTabDelete.textContent = t("delete");
+  }
+
+  function openTabEditor(tabId) {
+    editTabId = tabId;
+    const tab = tabId === null ? null : config.tabs.find(x => x.id === tabId);
+    document.getElementById("tabEditorTitle").textContent =
+      t(tab ? "editTab" : "newTab");
+    fTabName.value = tab ? label(tab.label) : "";
+    document.getElementById("tabMoveRow").style.display = tab ? "" : "none";
+    btnTabDelete.style.display = tab && config.tabs.length > 1 ? "" : "none";
+    resetDeleteButton();
+    tabEditorEl.classList.add("open");
+  }
+
+  function closeTabEditor() {
+    tabEditorEl.classList.remove("open");
+    editTabId = null;
+    resetDeleteButton();
+  }
+
+  document.getElementById("btnTabSave").addEventListener("click", () => {
+    const name = fTabName.value.trim();
+    if (!name) { setStatus("needName", true); return; }
+
+    if (editTabId === null) {
+      const id = "tab_" + Date.now().toString(36);
+      config.tabs.push({ id, label: name, buttons: [] });
+      activeTab = id;
+    } else {
+      const tab = config.tabs.find(x => x.id === editTabId);
+      // Keep a bundled tab's translations unless the name was actually changed
+      const unchanged = typeof tab.label === "object" && name === label(tab.label);
+      if (!unchanged) tab.label = name;
+    }
+    closeTabEditor();
+    persist();
+  });
+
+  btnTabDelete.addEventListener("click", () => {
+    const tab = config.tabs.find(x => x.id === editTabId);
+    if (!tab || config.tabs.length <= 1) return;
+
+    if (!deleteArmed && tab.buttons.length) {   // ask once if it holds buttons
+      deleteArmed = true;
+      btnTabDelete.textContent = t("confirmDelete");
+      return;
+    }
+    config.tabs = config.tabs.filter(x => x.id !== editTabId);
+    activeTab = config.tabs[0].id;
+    closeTabEditor();
+    persist();
+  });
+
+  function moveTab(offset) {
+    const from = config.tabs.findIndex(x => x.id === editTabId);
+    const to = from + offset;
+    if (from < 0 || to < 0 || to >= config.tabs.length) return;
+    [config.tabs[from], config.tabs[to]] = [config.tabs[to], config.tabs[from]];
+    persist();
+  }
+  document.getElementById("btnTabLeft").addEventListener("click", () => moveTab(-1));
+  document.getElementById("btnTabRight").addEventListener("click", () => moveTab(1));
+  document.getElementById("btnTabCancel").addEventListener("click", closeTabEditor);
+
+  let tabBackdropDown = false;
+  tabEditorEl.addEventListener("pointerdown", e => { tabBackdropDown = e.target === tabEditorEl; });
+  tabEditorEl.addEventListener("click", e => {
+    if (tabBackdropDown && e.target === tabEditorEl) closeTabEditor();
+    tabBackdropDown = false;
+  });
+
+  document.getElementById("pencil").addEventListener("click", () => {
+    if (!config) return;   // nothing to edit if buttons.json failed to load
+    editing = !editing;
+    document.body.classList.toggle("editing", editing);
+    renderTabs();      // adds/removes the + and edit buttons in the tab bar
+    renderHotbar();
+    showTab(activeTab);
+  });
 
   // ---- Settings-Panel -----------------------------------------------------
   const settingsEl = document.getElementById("settings");
   document.getElementById("gear").addEventListener("click", () => settingsEl.classList.add("open"));
   document.getElementById("closeSettings").addEventListener("click", () => settingsEl.classList.remove("open"));
-  settingsEl.addEventListener("click", e => { if (e.target === settingsEl) settingsEl.classList.remove("open"); });
+  let settingsDown = false;
+  settingsEl.addEventListener("pointerdown", e => { settingsDown = e.target === settingsEl; });
+  settingsEl.addEventListener("click", e => {
+    if (settingsDown && e.target === settingsEl) settingsEl.classList.remove("open");
+    settingsDown = false;
+  });
 
   function bindSegment(segId, key) {
     document.getElementById(segId).addEventListener("click", e => {
@@ -414,6 +939,7 @@
   bindSegment("segSize", "size");
   bindSegment("segVib", "vib");
   bindSegment("segRepeat", "repeat");
+  bindSegment("segHotbar", "hotbar");
   bindSegment("segLang", "lang");
 
   // Derive language options dynamically from buttons.json (every code that
