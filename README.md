@@ -18,6 +18,11 @@ A tiny Python server on your PC serves a web UI over your home network and
 injects the corresponding keystrokes into the CDDA window. No mods, no game
 API — works with any CDDA version.
 
+## Visuals
+
+
+<img width="1280" height="800" alt="overview" src="https://github.com/user-attachments/assets/0b973b36-6335-428f-9509-7ec430bdfb7b" />
+
 ## Features
 
 - 8-direction movement pad with the classic `@` as "wait one turn"
@@ -99,12 +104,6 @@ cdda-remote/
 └── static/
     └── index.html     Touch UI, settings panel, i18n
 ```
-
-## Visuals
-
-
-<img width="1280" height="800" alt="overview" src="https://github.com/user-attachments/assets/0b973b36-6335-428f-9509-7ec430bdfb7b" />
-
 
 ## License
 
