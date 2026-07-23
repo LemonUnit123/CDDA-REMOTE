@@ -21,7 +21,11 @@ API — works with any CDDA version.
 ## Visuals
 
 
-<img width="1280" height="800" alt="overview" src="https://github.com/user-attachments/assets/0b973b36-6335-428f-9509-7ec430bdfb7b" />
+<img width="640" height="400" alt="main view" src="https://github.com/user-attachments/assets/4c9e7f68-b2fa-4184-8289-38903b091b52" /> <img width="640" height="400" alt="settings" src="https://github.com/user-attachments/assets/83f86ca8-c3c5-4ae4-820f-07c385406a90" />
+<img width="640" height="400" alt="editing" src="https://github.com/user-attachments/assets/457e8bc9-5e25-4ff3-8f12-dfd16a53ae41" /> <img width="640" height="400" alt="addbutton" src="https://github.com/user-attachments/assets/fe3306a7-cdce-4b57-9838-5431bfa4d27b" />
+
+
+
 
 ## Features
 
