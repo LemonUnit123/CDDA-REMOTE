@@ -218,7 +218,7 @@
   };
 
   // ---- Settings (localStorage) --------------------------------------------
-  const DEFAULTS = { lang: "de", pad: "left", size: "m", vib: "on" };
+  const DEFAULTS = { lang: "en", pad: "left", size: "m", vib: "on" };
   let settings = { ...DEFAULTS };
   try { Object.assign(settings, JSON.parse(localStorage.getItem("cddaRemote") || "{}")); }
   catch { /* defekte Daten ignorieren */ }
