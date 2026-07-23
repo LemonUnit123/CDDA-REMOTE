@@ -29,14 +29,18 @@ API — works with any CDDA version.
 
 ## Features
 
-- 8-direction movement pad with the classic `@` as "wait one turn"
-- 40 default actions in 4 tabs (World / Body / Menus / System)
+- 8-direction movement pad with the classic `@` as "wait one turn",
+  plus optional hold-to-walk
+- **Editable hotbar** above the pad for your most-used actions, with a
+  **repeat button** that re-fires the last action you triggered
+- 40+ default actions in 4 tabs (World / Body / Menus / System)
 - **In-app settings**: language (DE/EN), pad position (left/right/off),
-  button size (S/M/L), vibration feedback — saved on the device
-- Fully data-driven: all buttons live in `buttons.json`, edit and reload
+  hotbar position (top/left/right), button size (S/M/L), hold-to-walk speed,
+  vibration feedback — saved on the device
+- Fully data-driven: buttons, hotbar and tabs are all editable from the web
+  UI and stored in `buttons.json`
 - Key **sequences** per button (e.g. `["esc", "s"]` to save)
 - Automatically focuses the CDDA window before each keystroke
-- No build step, no framework, no external assets — three files
 
 ## Quick start
 
@@ -54,25 +58,61 @@ Open it in your tablet's browser. For a fullscreen app feel, use
 
 If the Windows Firewall asks, allow access for **private networks**.
 
-### Schnellstart (Deutsch)
-
-Auf dem PC: `pip install -r requirements.txt`, dann `python server.py`.
-Die angezeigte Adresse im Tablet-Browser öffnen. Sprache lässt sich in den
-Einstellungen (⚙) auf Deutsch stellen.
-
 ## Customizing buttons
 
-Edit `buttons.json` — no server restart needed, just reload the page.
+The fastest way is the **built-in editor**: tap the ✎ icon in the header to
+enter edit mode, then tap any button to change it or the **+** tile to add a
+new one. You can set the icon (pick from the palette or type any emoji), the
+label, the key sequence, which tab or the hotbar it belongs to, and reorder
+buttons. Changes are saved to `buttons.json` on the PC, so they apply to
+every device that connects.
+
+Buttons you create carry one plain label that stays the same in every
+language. The bundled buttons ship with translations, and editing anything
+but their text leaves those translations intact.
+
+**Tabs are editable too.** In edit mode the tab bar gains two extra buttons:
+**+** creates a new tab, **✎** renames, reorders or deletes the current one.
+Deleting a tab removes its buttons as well, so it asks for a second tap to
+confirm — and the last remaining tab can't be deleted.
+
+Icons are plain Unicode characters — no image files involved. Anything your
+device can display works, including emoji from your keyboard.
+
+You can also edit `buttons.json` directly — no server restart needed, just
+reload the page.
 
 ```json
+{ "icon": "🔧", "label": "Use item", "keys": ["a"] }
 { "icon": "🔧", "label": { "de": "Benutzen", "en": "Use item" }, "keys": ["a"] }
 ```
 
+- `label` is either a plain string, or a map of language codes to text.
+  Adding a language (e.g. `"fr"`) makes it appear in the settings panel.
 - `keys` is a **sequence** of keystrokes in
   [`keyboard`](https://github.com/boppreh/keyboard) library format:
   `"g"`, `"shift+e"`, `"esc"`, `"enter"`, `"tab"`, `"space"`, …
-- `label` maps language codes to text. Add any language (e.g. `"fr"`)
-  and it automatically appears in the settings panel.
+
+The first time you save from the editor, the original file is backed up as
+`buttons.backup.json`.
+
+## Hotbar and repeat button
+
+The row above the movement pad is a hotbar: the shortcuts you reach for
+constantly, always visible no matter which tab is open. It lives under the
+`hotbar` key in `buttons.json` and is edited exactly like any other button —
+in edit mode, tap a hotbar entry to change it or the **+** to add one. The
+tab selector in the editor includes "Hotbar", so you can move buttons
+between the hotbar and any tab.
+
+Settings let you place it above the tabs, or as a vertical column on the
+left or right — so you can run the movement pad on one side, tabs in the
+middle and the hotbar on the other. In a side column its buttons take the
+same square shape as the grid tiles. On narrow portrait screens it always
+falls back to the horizontal row.
+
+The **⟳** button at the end repeats the last action you triggered, showing
+its icon as a reminder.
 
 ## Server configuration
 
