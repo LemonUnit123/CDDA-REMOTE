@@ -32,6 +32,7 @@ API — works with any CDDA version.
 ## Quick start
 
 Requires Python 3.9+ on the PC running CDDA (Windows).
+Just open Cmd or Powershell in the tools directory and type:
 
 ```
 pip install -r requirements.txt
